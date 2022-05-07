@@ -1,5 +1,5 @@
 mod get_price;
-mod price_mutation;
+mod price_manipulation;
 mod risk_management;
 mod utils;
 
@@ -11,8 +11,8 @@ use crate::get_price::simple_price::get_current_price;
 use crate::risk_management::risk_reward_ratio::calculate_risk_reward;
 
 // Price Mutation
-use crate::price_mutation::returns::get_return;
-use crate::price_mutation::risks::get_variance;
+use crate::price_manipulation::returns::get_return;
+use crate::price_manipulation::risks::get_variance;
 
 #[tokio::main]
 async fn main() {}

@@ -33,7 +33,5 @@ pub fn median<T: Ord + Copy>(slices: &mut [T]) -> T {
     slices[middle]
 }
 
-
-
 // Clone vs Cloned?
 // HashSet?
