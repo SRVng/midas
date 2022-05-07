@@ -33,5 +33,24 @@ pub fn median<T: Ord + Copy>(slices: &mut [T]) -> T {
     slices[middle]
 }
 
-// Clone vs Cloned?
-// HashSet?
+#[cfg(test)]
+mod tests {
+    use rust_decimal::prelude::{Decimal, FromPrimitive};
+    use super::*;
+
+    #[test]
+    fn test_mean() {
+        let slices_of_dec: [Decimal; 3] = [
+            Decimal::from_i16(10).unwrap(),
+            Decimal::from_i16(20).unwrap(),
+            Decimal::from_i16(30).unwrap(),
+        ];
+    
+        let average = mean(&slices_of_dec, &Decimal::from_usize(slices_of_dec.len()).unwrap());
+    
+        assert!(average == Decimal::from_i16(20).unwrap());
+    }
+}
+
+// Clone vs Cloned ?
+// wtf is HashSet ?
