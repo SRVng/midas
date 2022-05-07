@@ -11,3 +11,14 @@ pub async fn get_variance(returns: Vec<Decimal>) -> Decimal {
     
     squared_deviation / length
 }
+
+// TODO: Should add more method except from standard deviation
+
+pub async fn get_volatility(returns: Vec<Decimal>) -> Decimal {
+    let variance = get_variance(returns).await;
+    if let Some(volatility) = variance.sqrt() {
+        volatility
+    } else {
+        Decimal::ZERO
+    }
+}
