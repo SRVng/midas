@@ -16,10 +16,6 @@ pub fn calculate_risk_reward(risk_per_trade: f32, entry: f32, sl: f32, tp: f32) 
 
     let optimal_quantity = calculate_optimal_quantity(risk_per_trade, entry, sl);
 
-    // println!("Optimal Quantity: {}", optimal_quantity);
-    // println!("RRR: {}", calculate_reward_per_risk(sl, tp));
-    // println!("Value: {}", optimal_quantity * entry);
-    // println!("Est. Profit: {}", optimal_quantity* (tp - entry));
     RiskReward {
         optimal_quantity,
         risk_reward_ratio: calculate_reward_per_risk(sl, tp),
@@ -35,7 +31,5 @@ pub fn calculate_optimal_quantity(risk_per_trade: Decimal, entry: Decimal, sl: D
 }
 
 pub fn calculate_reward_per_risk(sl: Decimal, tp: Decimal) -> Decimal {
-    let result = tp / sl;
-
-    result
+    tp / sl
 }
