@@ -9,7 +9,7 @@ pub fn remove_same_values_in_slice<T: Clone + Eq + Hash>(v1: &[T], v2: &[T]) -> 
     (&hs1 - &hs2).iter().cloned().collect()
 }
 
-pub fn remove_with_lag_in_slice<T: Clone + Sub<Output = T> + Div<Output = T> + Copy>(
+pub fn calculate_return<T: Clone + Sub<Output = T> + Div<Output = T> + Copy + core::fmt::Debug>(
     v: &[T],
     v_lag: &[T],
     lag_length: usize,
@@ -17,7 +17,7 @@ pub fn remove_with_lag_in_slice<T: Clone + Sub<Output = T> + Div<Output = T> + C
     let mut store: Vec<T> = Vec::new();
 
     for index in 0..lag_length {
-        store.push((v[index] - v_lag[index]) / v_lag[index])
+        store.push((v_lag[index] - v[index]) / v[index])
     }
 
     Some(store)
