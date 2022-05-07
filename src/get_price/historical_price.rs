@@ -13,19 +13,19 @@ impl IHistoricalResponse {
     pub fn extract_prices(&self) -> Box<[Decimal]> {
         self.prices
             .iter()
-            .filter_map(|[_timestamp, price]| Some(*price))
+            .map(|[_timestamp, price]| *price)
             .collect::<Box<[Decimal]>>()
     }
     pub fn extract_market_caps(&self) -> Box<[Decimal]> {
         self.market_caps
             .iter()
-            .filter_map(|[_timestamp, market_caps]| Some(*market_caps))
+            .map(|[_timestamp, market_caps]| *market_caps)
             .collect::<Box<[Decimal]>>()
     }
     pub fn extract_volumes(&self) -> Box<[Decimal]> {
         self.total_volumes
             .iter()
-            .filter_map(|[_timestamp, volume]| Some(*volume))
+            .map(|[_timestamp, volume]| *volume)
             .collect::<Box<[Decimal]>>()
     }
 }
