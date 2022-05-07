@@ -13,14 +13,14 @@ pub fn remove_with_lag_in_slice<T: Clone + Sub<Output = T> + Div<Output = T> + C
     v: &[T],
     v_lag: &[T],
     lag_length: usize,
-) -> Result<Box<[T]>, String> {
+) -> Option<Vec<T>> {
     let mut store: Vec<T> = Vec::new();
 
     for index in 0..lag_length {
         store.push((v[index] - v_lag[index]) / v_lag[index])
     }
 
-    Ok(store.iter().map(|x| *x).collect::<Box<[T]>>())
+    Some(store)
 }
 
 pub fn mean<'a, T: 'a + Sum<&'a T> + Div<Output = T> + Copy>(slices: &'a [T], length: &T) -> T {
