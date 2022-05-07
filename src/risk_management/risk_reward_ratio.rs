@@ -1,42 +1,41 @@
+use rust_decimal::Decimal;
+
 #[derive(Debug)]
 pub struct RiskReward {
-    optimal_quantity: f64,
-    risk_reward_ratio: f64,
-    value: f64,
-    estimate_profit: f64,
+    pub optimal_quantity: Decimal,
+    pub risk_reward_ratio: Decimal,
+    pub value: Decimal,
+    pub estimate_profit: Decimal,
 }
 
-pub fn main_risk_reward(risk_per_trade: f64, entry: f64, sl: f64, tp: f64) -> RiskReward {
-    let optimal_quantity = calculate_optimal_quantity(risk_per_trade, entry, sl).unwrap();
+pub fn calculate_risk_reward(risk_per_trade: f32, entry: f32, sl: f32, tp: f32) -> RiskReward {
+    let risk_per_trade = Decimal::from_f32_retain(risk_per_trade).unwrap();
+    let entry = Decimal::from_f32_retain(entry).unwrap();
+    let sl = Decimal::from_f32_retain(sl).unwrap();
+    let tp = Decimal::from_f32_retain(tp).unwrap();
 
-    println!("Optimal Quantity: {}", optimal_quantity);
-    println!("RRR: {}", calculate_risk_reward_ratio(sl, tp).unwrap());
-    println!("Value: {}", optimal_quantity * entry);
-    println!("Est. Profit: {}", optimal_quantity* (tp - entry));
-    RiskReward { 
-        optimal_quantity, 
-        risk_reward_ratio: calculate_risk_reward_ratio(sl, tp)
-            .expect("Wrong parameter for stop loss and take profit"), 
-        value: optimal_quantity * entry, 
-        estimate_profit: optimal_quantity * (tp - entry) 
+    let optimal_quantity = calculate_optimal_quantity(risk_per_trade, entry, sl);
+
+    // println!("Optimal Quantity: {}", optimal_quantity);
+    // println!("RRR: {}", calculate_reward_per_risk(sl, tp));
+    // println!("Value: {}", optimal_quantity * entry);
+    // println!("Est. Profit: {}", optimal_quantity* (tp - entry));
+    RiskReward {
+        optimal_quantity,
+        risk_reward_ratio: calculate_reward_per_risk(sl, tp),
+        value: optimal_quantity * entry,
+        estimate_profit: optimal_quantity * (tp - entry),
     }
 }
 
-pub fn calculate_optimal_quantity(risk_per_trade: f64, entry: f64, sl: f64) -> Result<f64,String> {
+pub fn calculate_optimal_quantity(risk_per_trade: Decimal, entry: Decimal, sl: Decimal) -> Decimal {
+    let result: Decimal = risk_per_trade / (entry - sl);
 
-    let result: f64 = risk_per_trade / (entry - sl);
-
-    match result {
-        0.0.. => Ok(result),
-        x => Err(String::from("N/A"))
-    }
+    result
 }
 
-pub fn calculate_risk_reward_ratio(sl: f64, tp: f64) -> Result<f64, String> {
+pub fn calculate_reward_per_risk(sl: Decimal, tp: Decimal) -> Decimal {
     let result = tp / sl;
 
-    match result {
-        0.1.. => Ok(result),
-        x => Err(String::from("N/A"))
-    }
+    result
 }
