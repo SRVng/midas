@@ -1,35 +1,47 @@
-use rust_decimal::Decimal;
+use std::ops::{Sub, Mul, Div};
 
+pub struct IRiskRewardParams<T: Sub<Output = T> + Mul<Output = T> + Div<Output = T> + Copy> {
+    pub risk_per_trade: T,
+    pub entry: T,
+    pub stop_loss: T,
+    pub take_profit: T,
+}
 #[derive(Debug)]
-pub struct RiskReward {
-    pub optimal_quantity: Decimal,
-    pub risk_reward_ratio: Decimal,
-    pub value: Decimal,
-    pub estimate_profit: Decimal,
+pub struct IRiskRewardResult<T: Sub<Output = T> + Mul<Output = T> + Div<Output = T> + Copy> {
+    pub optimal_quantity: T,
+    pub risk_reward_ratio: T,
+    pub value: T,
+    pub estimate_profit: T,
 }
 
-pub fn calculate_risk_reward(risk_per_trade: f32, entry: f32, sl: f32, tp: f32) -> RiskReward {
-    let risk_per_trade = Decimal::from_f32_retain(risk_per_trade).unwrap();
-    let entry = Decimal::from_f32_retain(entry).unwrap();
-    let sl = Decimal::from_f32_retain(sl).unwrap();
-    let tp = Decimal::from_f32_retain(tp).unwrap();
+pub fn calculate_risk_reward<T: 
+    Sub<Output = T> + 
+    Mul<Output = T> + 
+    Div<Output = T> +
+    Copy
+    >(params: IRiskRewardParams<T>) -> IRiskRewardResult<T> {
+    // let risk_per_trade = T::from_f32_retain(risk_per_trade).unwrap();
+    // let entry = T::from_f32_retain(entry).unwrap();
+    // let stop_loss = T::from_f32_retain(stop_loss).unwrap();
+    // let take_profit = T::from_f32_retain(take_profit).unwrap();
+        let IRiskRewardParams { risk_per_trade, entry, stop_loss, take_profit } = params;
 
-    let optimal_quantity = calculate_optimal_quantity(risk_per_trade, entry, sl);
+        let optimal_quantity = calculate_optimal_quantity(risk_per_trade, entry, stop_loss);
 
-    RiskReward {
-        optimal_quantity,
-        risk_reward_ratio: calculate_reward_per_risk(sl, tp),
-        value: optimal_quantity * entry,
-        estimate_profit: optimal_quantity * (tp - entry),
+        IRiskRewardResult {
+            optimal_quantity,
+            risk_reward_ratio: calculate_reward_per_risk(stop_loss, take_profit),
+            value: optimal_quantity * entry,
+            estimate_profit: optimal_quantity * (take_profit - entry),
     }
 }
 
-pub fn calculate_optimal_quantity(risk_per_trade: Decimal, entry: Decimal, sl: Decimal) -> Decimal {
-    let result: Decimal = risk_per_trade / (entry - sl);
+fn calculate_optimal_quantity<T: Sub<Output = T> + Mul<Output = T> + Div<Output = T>>(risk_per_trade: T, entry: T, stop_loss: T) -> T {
+    let result: T = risk_per_trade / (entry - stop_loss);
 
     result
 }
 
-pub fn calculate_reward_per_risk(sl: Decimal, tp: Decimal) -> Decimal {
-    tp / sl
+fn calculate_reward_per_risk<T: Sub<Output = T> + Mul<Output = T> + Div<Output = T>>(stop_loss: T, take_profit: T) -> T {
+    take_profit / stop_loss
 }
