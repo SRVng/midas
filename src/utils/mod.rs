@@ -30,15 +30,17 @@ pub fn mean<'a, T: 'a + Sum<&'a T> + Div<Output = T> + Copy>(slices: &'a [T], le
     slices.iter().sum::<T>() / *length
 }
 
-pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output =  T> + FromPrimitive + Debug>(slices: &mut [T]) -> T {
+pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output = T> + FromPrimitive + Debug>(
+    slices: &mut [T],
+) -> T {
     slices.sort();
 
     match (slices.len() % 2) == 0 {
         true => {
             let middle: i16 = (slices.len() as i16 / 2) - 1; // Index start from 0
-            
+
             (slices[middle as usize] + slices[(middle + 1) as usize]) / T::from_i16(2).unwrap()
-        },
+        }
         false => {
             let middle: usize = slices.len() / 2;
             slices[middle]
@@ -48,31 +50,25 @@ pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output =  T> + FromPrimitive
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use rust_decimal::prelude::{Decimal, FromPrimitive};
     use rust_decimal_macros::dec;
-    use super::*;
 
     #[test]
     fn test_mean() {
-        let slices_of_dec: [Decimal; 3] = [
-            dec!(10),
-            dec!(20),
-            dec!(30),
-        ];
-    
-        let average = mean(&slices_of_dec, &Decimal::from_usize(slices_of_dec.len()).unwrap());
-    
+        let slices_of_dec: [Decimal; 3] = [dec!(10), dec!(20), dec!(30)];
+
+        let average = mean(
+            &slices_of_dec,
+            &Decimal::from_usize(slices_of_dec.len()).unwrap(),
+        );
+
         assert!(average == dec!(20));
     }
 
     #[test]
     fn test_median() {
-        let mut slices_of_dec: [Decimal; 4] = [
-            dec!(10),
-            dec!(20),
-            dec!(30),
-            dec!(40),
-        ];
+        let mut slices_of_dec: [Decimal; 4] = [dec!(10), dec!(20), dec!(30), dec!(40)];
 
         assert!(median(&mut slices_of_dec) == dec!(25));
     }

@@ -22,8 +22,8 @@ pub async fn get_average_return(returns: Vec<Decimal>) -> Decimal {
 #[cfg(test)]
 mod tests {
 
-    use rust_decimal_macros::dec;
     use super::*;
+    use rust_decimal_macros::dec;
 
     #[tokio::test]
     async fn test_calculate_return() {
@@ -37,14 +37,14 @@ mod tests {
         ];
 
         assert!(
-            get_return(&prices).await ==
-            vec![
-                dec!(0.124559932942162615255658005),
-                dec!(-0.1180679785330948121645796064),
-                dec!(-0.0356659905341446923597025017),
-                dec!(-0.0320771253286590709903593339),
-                dec!(-0.020101412531691416153567548),
-            ]
+            get_return(&prices).await
+                == vec![
+                    dec!(0.124559932942162615255658005),
+                    dec!(-0.1180679785330948121645796064),
+                    dec!(-0.0356659905341446923597025017),
+                    dec!(-0.0320771253286590709903593339),
+                    dec!(-0.020101412531691416153567548),
+                ]
         )
     }
 

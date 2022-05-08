@@ -1,20 +1,31 @@
-use std::{iter::Sum, fmt::Debug};
-use std::ops::{Add, Sub, Mul, Div};
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use crate::utils::mean;
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use std::ops::{Add, Div, Mul, Sub};
+use std::{fmt::Debug, iter::Sum};
 
 pub struct IMAParams<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug> {
     pub prices: &'a [T],
-    pub period: u32
+    pub period: u32,
 }
 
 // TODO: Custom Error
 
-fn calculate_simple_moving_average<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug>(prices: &'a [T], period: u32) -> Option<T> {
+fn calculate_simple_moving_average<
+    'a,
+    T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug,
+>(
+    prices: &'a [T],
+    period: u32,
+) -> Option<T> {
     Some(mean(prices, &T::from_u32(period).unwrap()))
 }
 
-pub fn simple_moving_average<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug>(params: IMAParams<'a, T>) -> Result<Vec<T>, String> {
+pub fn simple_moving_average<
+    'a,
+    T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug,
+>(
+    params: IMAParams<'a, T>,
+) -> Result<Vec<T>, String> {
     let IMAParams { prices, period } = params;
     let max_length = prices.len();
 
@@ -24,7 +35,9 @@ pub fn simple_moving_average<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output
         if index + period.to_usize().unwrap() > max_length {
             break;
         }
-        if let Some(value) = calculate_simple_moving_average(&prices[index..index + period as usize], period) {
+        if let Some(value) =
+            calculate_simple_moving_average(&prices[index..index + period as usize], period)
+        {
             sma.push(value);
         } else {
             panic!("Error in calculate SMA")
@@ -38,57 +51,60 @@ pub fn simple_moving_average<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output
 // * α (smoothing factor) most opt for value of 2 (from tradingview)
 // * then α = 2 / (1 + t)
 
-fn calculate_exponential_moving_average<'a, 
-    T: 'a + 
-        FromPrimitive + 
-        Sum<&'a T> +
-        Add<Output = T> +
-        Sub<Output = T> +
-        Mul<Output = T> +
-        Div<Output = T> + 
-        Copy + 
-        Debug>
-    (
-        price: T, 
-        smoothing_factor: T,
-        prev_ema: T
-    ) -> Option<T> {
-        Some(
-            (smoothing_factor * price) + (T::from_i16(1).unwrap() - smoothing_factor) * prev_ema 
-        )
+fn calculate_exponential_moving_average<
+    'a,
+    T: 'a
+        + FromPrimitive
+        + Sum<&'a T>
+        + Add<Output = T>
+        + Sub<Output = T>
+        + Mul<Output = T>
+        + Div<Output = T>
+        + Copy
+        + Debug,
+>(
+    price: T,
+    smoothing_factor: T,
+    prev_ema: T,
+) -> Option<T> {
+    Some((smoothing_factor * price) + (T::from_i16(1).unwrap() - smoothing_factor) * prev_ema)
 }
 
-pub fn exponential_moving_average<'a, 
-    T: 'a + 
-        FromPrimitive + 
-        Sum<&'a T> + 
-        Add<Output = T> +
-        Sub<Output = T> +
-        Mul<Output = T> +
-        Div<Output = T> + 
-        Copy + 
-        Debug>
-    (
-        params: IMAParams<'a, T>
-    ) -> Result<Vec<T>, String> {
-        let IMAParams { prices, period } = params;
+pub fn exponential_moving_average<
+    'a,
+    T: 'a
+        + FromPrimitive
+        + Sum<&'a T>
+        + Add<Output = T>
+        + Sub<Output = T>
+        + Mul<Output = T>
+        + Div<Output = T>
+        + Copy
+        + Debug,
+>(
+    params: IMAParams<'a, T>,
+) -> Result<Vec<T>, String> {
+    let IMAParams { prices, period } = params;
 
-        let max_length = prices.len();
-        let first_ema = calculate_simple_moving_average(&prices[0..period as usize], period).expect("Failed to calculate SMA");
-        let smoothing_factor = T::from_u32(2).unwrap() / T::from_u32(1 + period).unwrap();
+    let max_length = prices.len();
+    let first_ema = calculate_simple_moving_average(&prices[0..period as usize], period)
+        .expect("Failed to calculate SMA");
+    let smoothing_factor = T::from_u32(2).unwrap() / T::from_u32(1 + period).unwrap();
 
-        let mut ema: Vec<T> = vec![first_ema];
+    let mut ema: Vec<T> = vec![first_ema];
 
-        for index in 1..max_length {
-            let prev_ema = ema[index - 1];
-            if let Some(value) = calculate_exponential_moving_average(prices[index], smoothing_factor, prev_ema) {
-                ema.push(value);
-            } else {
-                panic!("Error in calculate EMA")
-            }
+    for index in 1..max_length {
+        let prev_ema = ema[index - 1];
+        if let Some(value) =
+            calculate_exponential_moving_average(prices[index], smoothing_factor, prev_ema)
+        {
+            ema.push(value);
+        } else {
+            panic!("Error in calculate EMA")
         }
+    }
 
-        Ok(ema)
+    Ok(ema)
 }
 
 #[cfg(test)]
@@ -122,8 +138,11 @@ mod tests {
             dec!(19),
         ];
 
-        if let Ok(value) = simple_moving_average(IMAParams { prices: &PRICES, period: PERIOD }) {
-            assert!(value == result);            
+        if let Ok(value) = simple_moving_average(IMAParams {
+            prices: &PRICES,
+            period: PERIOD,
+        }) {
+            assert!(value == result);
         } else {
             panic!("Failed")
         }
@@ -143,7 +162,10 @@ mod tests {
             dec!(18.992074378905654625819234873),
         ];
 
-        if let Ok(value) = exponential_moving_average(IMAParams { prices: &PRICES, period: PERIOD }) {
+        if let Ok(value) = exponential_moving_average(IMAParams {
+            prices: &PRICES,
+            period: PERIOD,
+        }) {
             println!("{:?}", value);
             assert!(value == result);
         } else {

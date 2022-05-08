@@ -58,6 +58,8 @@ mod tests {
 
         let returns = get_return(&prices).await;
 
-        assert!(get_volatility(returns).await == dec!(0.0061673295653075877308743126).sqrt().unwrap());
+        assert!(
+            get_volatility(returns).await == dec!(0.0061673295653075877308743126).sqrt().unwrap()
+        );
     }
 }
