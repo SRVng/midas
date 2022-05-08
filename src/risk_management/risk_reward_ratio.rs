@@ -17,10 +17,6 @@ pub struct IRiskRewardResult<T: Sub<Output = T> + Mul<Output = T> + Div<Output =
 pub fn calculate_risk_reward<T: Sub<Output = T> + Mul<Output = T> + Div<Output = T> + Copy>(
     params: IRiskRewardParams<T>,
 ) -> IRiskRewardResult<T> {
-    // let risk_per_trade = T::from_f32_retain(risk_per_trade).unwrap();
-    // let entry = T::from_f32_retain(entry).unwrap();
-    // let stop_loss = T::from_f32_retain(stop_loss).unwrap();
-    // let take_profit = T::from_f32_retain(take_profit).unwrap();
     let IRiskRewardParams {
         risk_per_trade,
         entry,
@@ -53,4 +49,40 @@ fn calculate_reward_per_risk<T: Sub<Output = T> + Mul<Output = T> + Div<Output =
     take_profit: T,
 ) -> T {
     take_profit / stop_loss
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_decimal::Decimal;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn test_calculate_risk_reward() {
+        let result: IRiskRewardResult<Decimal> = IRiskRewardResult {
+            optimal_quantity: dec!(333.33333333333333333333333333),
+            risk_reward_ratio: dec!(7.4444444444444444444444444444),
+            value: dec!(40),
+            estimate_profit: dec!(183.33333333333333333333333333),
+        };
+
+        let calc = calculate_risk_reward(IRiskRewardParams {
+            risk_per_trade: dec!(10),
+            entry: dec!(0.12),
+            stop_loss: dec!(0.09),
+            take_profit: dec!(0.67),
+        });
+
+        let IRiskRewardResult {
+            optimal_quantity,
+            risk_reward_ratio,
+            value,
+            estimate_profit,
+        } = calc;
+
+        assert!(optimal_quantity == result.optimal_quantity);
+        assert!(risk_reward_ratio == result.risk_reward_ratio);
+        assert!(value == result.value);
+        assert!(estimate_profit == result.estimate_profit);
+    }
 }
