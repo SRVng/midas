@@ -19,6 +19,7 @@ pub async fn get_average_return(returns: Vec<Decimal>) -> Decimal {
     mean(&returns, &Decimal::from_usize(returns.len()).unwrap())
 }
 
+#[cfg(test)]
 mod tests {
 
     use rust_decimal_macros::dec;

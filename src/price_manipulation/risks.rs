@@ -23,6 +23,7 @@ pub async fn get_volatility(returns: Vec<Decimal>) -> Decimal {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::price_manipulation::returns::get_return;
