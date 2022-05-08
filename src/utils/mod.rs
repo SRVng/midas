@@ -36,10 +36,8 @@ pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output =  T> + FromPrimitive
     match (slices.len() % 2) == 0 {
         true => {
             let middle: i16 = (slices.len() as i16 / 2) - 1; // Index start from 0
-
-            let res = (slices[middle as usize] + slices[(middle + 1) as usize]) / T::from_i16(2).unwrap();
-
-            res
+            
+            (slices[middle as usize] + slices[(middle + 1) as usize]) / T::from_i16(2).unwrap()
         },
         false => {
             let middle: usize = slices.len() / 2;
