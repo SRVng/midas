@@ -22,3 +22,41 @@ pub async fn get_volatility(returns: Vec<Decimal>) -> Decimal {
         Decimal::ZERO
     }
 }
+
+mod tests {
+    use super::*;
+    use crate::price_manipulation::returns::get_return;
+    use rust_decimal_macros::dec;
+
+    #[tokio::test]
+    async fn test_get_variance() {
+        let prices: [Decimal; 6] = [
+            dec!(59.65),
+            dec!(67.08),
+            dec!(59.16),
+            dec!(57.05),
+            dec!(55.22),
+            dec!(54.11),
+        ];
+
+        let returns = get_return(&prices).await;
+
+        assert!(get_variance(returns).await == dec!(0.0061673295653075877308743126));
+    }
+
+    #[tokio::test]
+    async fn test_get_volatility() {
+        let prices: [Decimal; 6] = [
+            dec!(59.65),
+            dec!(67.08),
+            dec!(59.16),
+            dec!(57.05),
+            dec!(55.22),
+            dec!(54.11),
+        ];
+
+        let returns = get_return(&prices).await;
+
+        assert!(get_volatility(returns).await == dec!(0.0061673295653075877308743126).sqrt().unwrap());
+    }
+}

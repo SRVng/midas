@@ -1,7 +1,10 @@
 use std::collections::HashSet;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::iter::Sum;
-use std::ops::{Div, Sub};
+use std::ops::{Add, Div, Sub};
+
+use rust_decimal::prelude::FromPrimitive;
 
 pub fn remove_same_values_in_slice<T: Clone + Eq + Hash>(v1: &[T], v2: &[T]) -> Box<[T]> {
     let hs1: HashSet<T> = v1.iter().cloned().collect();
@@ -27,10 +30,22 @@ pub fn mean<'a, T: 'a + Sum<&'a T> + Div<Output = T> + Copy>(slices: &'a [T], le
     slices.iter().sum::<T>() / *length
 }
 
-pub fn median<T: Ord + Copy>(slices: &mut [T]) -> T {
+pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output =  T> + FromPrimitive + Debug>(slices: &mut [T]) -> T {
     slices.sort();
-    let middle = slices.len() / 2;
-    slices[middle]
+
+    match (slices.len() % 2) == 0 {
+        true => {
+            let middle: i16 = (slices.len() as i16 / 2) - 1; // Index start from 0
+
+            let res = (slices[middle as usize] + slices[(middle + 1) as usize]) / T::from_i16(2).unwrap();
+
+            res
+        },
+        false => {
+            let middle: usize = slices.len() / 2;
+            slices[middle]
+        }
+    }
 }
 
 #[cfg(test)]
@@ -50,6 +65,18 @@ mod tests {
         let average = mean(&slices_of_dec, &Decimal::from_usize(slices_of_dec.len()).unwrap());
     
         assert!(average == dec!(20));
+    }
+
+    #[test]
+    fn test_median() {
+        let mut slices_of_dec: [Decimal; 4] = [
+            dec!(10),
+            dec!(20),
+            dec!(30),
+            dec!(40),
+        ];
+
+        assert!(median(&mut slices_of_dec) == dec!(25));
     }
 }
 
