@@ -46,3 +46,15 @@ pub async fn get_historical_chart_data(coin_id: &str) -> IHistoricalResponse {
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_historical_data() {
+        let data = get_historical_chart_data("avalanche-2").await;
+
+        assert!(data.extract_prices().len() == 361 as usize);
+    }
+}
