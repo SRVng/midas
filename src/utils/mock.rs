@@ -1,0 +1,36 @@
+use rust_decimal_macros::dec;
+
+pub fn mock_prices() -> [rust_decimal::Decimal; 30] {
+    [
+        dec!(2),
+        dec!(4.32),
+        dec!(6.56),
+        dec!(8.1),
+        dec!(12.9),
+        dec!(14.07),
+        dec!(16.2),
+        dec!(18.2),
+        dec!(20.5),
+        dec!(21.4),
+        dec!(19.58),
+        dec!(20.22),
+        dec!(20.56),
+        dec!(20.13),
+        dec!(19.57),
+        dec!(18.22),
+        dec!(14),
+        dec!(15.23),
+        dec!(16.27),
+        dec!(18.5),
+        dec!(19.5),
+        dec!(20),
+        dec!(19.68),
+        dec!(20.33),
+        dec!(20.45),
+        dec!(21.23),
+        dec!(22.25),
+        dec!(23.57),
+        dec!(23.98),
+        dec!(24.12),
+    ]
+}

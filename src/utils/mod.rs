@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::iter::Sum;
 use std::ops::{Add, Div, Sub};
+pub mod mock;
 
 use rust_decimal::prelude::FromPrimitive;
 
@@ -74,5 +75,5 @@ mod tests {
     }
 }
 
-// Clone vs Cloned ?
-// wtf is HashSet ?
+// TODO: Clone vs Cloned ?
+// TODO: wtf is HashSet ?
