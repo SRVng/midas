@@ -27,6 +27,18 @@ pub fn calculate_return<T: Clone + Sub<Output = T> + Div<Output = T> + Copy + co
     Some(store)
 }
 
+pub fn create_indicator_cross_vec<T: Sub<Output = T> + Copy + Debug>(
+    max_length: usize,
+    v1: &[T],
+    v2: &[T],
+) -> Vec<T> {
+    let mut crossed: Vec<T> = Vec::new();
+    for index in 0..max_length {
+        crossed.push(v1[index] - v2[index])
+    }
+    crossed
+}
+
 pub fn mean<'a, T: 'a + Sum<&'a T> + Div<Output = T> + Copy>(slices: &'a [T], length: &T) -> T {
     slices.iter().sum::<T>() / *length
 }

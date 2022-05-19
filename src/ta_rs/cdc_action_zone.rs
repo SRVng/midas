@@ -6,7 +6,10 @@ use std::{
 
 use rust_decimal::prelude::FromPrimitive;
 
-use crate::ta_rs::ma::{exponential_moving_average, IMAParams};
+use crate::{
+    ta_rs::ma::{exponential_moving_average, IMAParams},
+    utils::create_indicator_cross_vec,
+};
 
 pub async fn get_cdc_action_zone<
     'a,
@@ -22,10 +25,6 @@ pub async fn get_cdc_action_zone<
 >(
     prices: &'a [T],
 ) -> Result<Vec<T>, String> {
-    let max_length = prices.len();
-
-    let mut cdc: Vec<T> = Vec::new();
-
     let ema_12: Vec<T> =
         if let Ok(value) = exponential_moving_average(IMAParams { prices, period: 12 }) {
             value
@@ -40,11 +39,8 @@ pub async fn get_cdc_action_zone<
             panic!("Error at EMA26 calculation")
         };
 
-    for index in 0..max_length {
-        cdc.push(ema_12[index] - ema_26[index])
-    }
-
-    Ok(cdc)
+    let max_length = prices.len();
+    Ok(create_indicator_cross_vec(max_length, &ema_12, &ema_26))
 }
 
 #[cfg(test)]

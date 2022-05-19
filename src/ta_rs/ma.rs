@@ -1,4 +1,4 @@
-use crate::utils::mean;
+use crate::utils::{mean, create_indicator_cross_vec};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use std::ops::{Add, Div, Mul, Sub};
 use std::{fmt::Debug, iter::Sum};
@@ -105,6 +105,32 @@ pub fn exponential_moving_average<
     }
 
     Ok(ema)
+}
+
+pub fn get_ma_cross<'a, T: 'a + FromPrimitive + Sum<&'a T> + Sub<Output = T> + Div<Output = T> + Copy + Debug>(
+    prices: &'a [T],
+    fast: u32,
+    slow: u32,
+) -> Result<Vec<T>, String> {
+    let fast_ma: Vec<T> = if let Ok(value) = simple_moving_average(IMAParams {
+        prices,
+        period: fast,
+    }) {
+        value
+    } else {
+        panic!("Error in calculate Fast SMA")
+    };
+    let slow_ma: Vec<T> = if let Ok(value) = simple_moving_average(IMAParams {
+        prices,
+        period: slow,
+    }) {
+        value
+    } else {
+        panic!("Error in calculate Slow SMA")
+    };
+    let max_length = slow_ma.len();
+    let fast_ma_cutoff = fast_ma.len() - max_length;
+    Ok(create_indicator_cross_vec(max_length, &fast_ma[fast_ma_cutoff..], &slow_ma))
 }
 
 #[cfg(test)]
