@@ -27,14 +27,12 @@ pub fn calculate_return<T: Clone + Sub<Output = T> + Div<Output = T> + Copy + co
     Some(store)
 }
 
-pub fn create_indicator_cross_vec<T: Sub<Output = T> + Copy + Debug>(
-    max_length: usize,
-    v1: &[T],
-    v2: &[T],
-) -> Vec<T> {
+pub fn create_indicator_cross_vec<T: Sub<Output = T> + Copy + Debug>(v1: &[T], v2: &[T]) -> Vec<T> {
+    let max_length = v2.len();
     let mut crossed: Vec<T> = Vec::new();
+    let v1_start_point = &v1[v1.len() - v2.len()..];
     for index in 0..max_length {
-        crossed.push(v1[index] - v2[index])
+        crossed.push(v1_start_point[index] - v2[index])
     }
     crossed
 }
