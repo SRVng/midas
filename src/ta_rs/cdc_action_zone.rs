@@ -38,9 +38,7 @@ pub async fn get_cdc_action_zone<
         } else {
             panic!("Error at EMA26 calculation")
         };
-
-    let max_length = prices.len();
-    Ok(create_indicator_cross_vec(max_length, &ema_12, &ema_26))
+    Ok(create_indicator_cross_vec(&ema_12, &ema_26))
 }
 
 #[cfg(test)]
@@ -85,7 +83,6 @@ mod tests {
         ];
 
         if let Ok(value) = get_cdc_action_zone(&mock_prices()).await {
-            println!("{:#?}", value);
             assert!(value == result);
         } else {
             panic!("Failed");

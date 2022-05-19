@@ -1,4 +1,4 @@
-use crate::utils::{mean, create_indicator_cross_vec};
+use crate::utils::{create_indicator_cross_vec, mean};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use std::ops::{Add, Div, Mul, Sub};
 use std::{fmt::Debug, iter::Sum};
@@ -93,10 +93,10 @@ pub fn exponential_moving_average<
 
     let mut ema: Vec<T> = vec![first_ema];
 
-    for index in 1..max_length {
-        let prev_ema = ema[index - 1];
+    for index in (period as usize + 1)..max_length {
+        let prev_ema = ema.last().expect("No previous EMA");
         if let Some(value) =
-            calculate_exponential_moving_average(prices[index], smoothing_factor, prev_ema)
+            calculate_exponential_moving_average(prices[index], smoothing_factor, *prev_ema)
         {
             ema.push(value);
         } else {
@@ -107,7 +107,10 @@ pub fn exponential_moving_average<
     Ok(ema)
 }
 
-pub fn get_ma_cross<'a, T: 'a + FromPrimitive + Sum<&'a T> + Sub<Output = T> + Div<Output = T> + Copy + Debug>(
+pub fn get_ma_cross<
+    'a,
+    T: 'a + FromPrimitive + Sum<&'a T> + Sub<Output = T> + Div<Output = T> + Copy + Debug,
+>(
     prices: &'a [T],
     fast: u32,
     slow: u32,
@@ -130,7 +133,10 @@ pub fn get_ma_cross<'a, T: 'a + FromPrimitive + Sum<&'a T> + Sub<Output = T> + D
     };
     let max_length = slow_ma.len();
     let fast_ma_cutoff = fast_ma.len() - max_length;
-    Ok(create_indicator_cross_vec(max_length, &fast_ma[fast_ma_cutoff..], &slow_ma))
+    Ok(create_indicator_cross_vec(
+        &fast_ma[fast_ma_cutoff..],
+        &slow_ma,
+    ))
 }
 
 #[cfg(test)]
@@ -192,7 +198,6 @@ mod tests {
             prices: &PRICES,
             period: PERIOD,
         }) {
-            println!("{:?}", value);
             assert!(value == result);
         } else {
             panic!("Failed")

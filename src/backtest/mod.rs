@@ -16,7 +16,7 @@ pub struct IBackTestingParams<'a> {
 
 pub struct IBackTestingIndicator<T> {
     pub cdc: Vec<T>,
-    pub ma_cross: Vec<T>
+    pub ma_cross: Vec<T>,
 }
 
 pub struct IPreBacktesting<T> {
@@ -91,7 +91,7 @@ async fn pre_backtest(
         // sma: simple_moving_average(IMAParams { prices: &prices, period: 12 }).unwrap(),
         // ema: exponential_moving_average(IMAParams { prices: &prices, period: 12 }).unwrap(),
         cdc: get_cdc_action_zone(&prices).await.unwrap(),
-        ma_cross: get_ma_cross(&prices, 14, 26).unwrap()
+        ma_cross: get_ma_cross(&prices, 14, 26).unwrap(),
     };
 
     Ok(IPreBacktesting {
@@ -114,29 +114,29 @@ pub async fn start_backtesting(params: IBackTestingParams<'_>) -> IBackTestingRe
     };
 
     let mut positions: IBackTestingResult<Decimal> = IBackTestingResult { result: Vec::new() };
-
+    let gap = prices.len() - indicators.cdc.len();
     // * Extract
-    for index in 1..indicators.ma_cross.len() {
-        if indicators.ma_cross[index] > Decimal::ZERO && indicators.ma_cross[index - 1] < Decimal::ZERO {
+    for index in 1..indicators.cdc.len() {
+        if indicators.cdc[index] > Decimal::ZERO && indicators.cdc[index - 1] < Decimal::ZERO {
             positions.result.push(IBackTestingSingleResult {
                 action: POSITION::LONG,
-                price: prices[index],
+                price: prices[index + gap],
             })
-        } else if indicators.ma_cross[index] < Decimal::ZERO
-            && indicators.ma_cross[index - 1] > Decimal::ZERO
+        } else if indicators.cdc[index] < Decimal::ZERO
+            && indicators.cdc[index - 1] > Decimal::ZERO
             && positions.result.len() != 0
         {
             match positions.result[positions.result.len() - 1].action {
                 POSITION::LONG => positions.result.push(IBackTestingSingleResult {
                     action: POSITION::CLOSE,
-                    price: prices[index],
+                    price: prices[index + gap],
                 }),
                 _ => (),
             }
         }
     }
     //TODO: Fix prices, ma length not match
-    println!("{:#?}", prices);
+    println!("{:#?}, {:#?}", indicators.cdc.len(), prices.len());
     println!("{:#?}", positions);
     positions
 }
