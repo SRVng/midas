@@ -93,10 +93,10 @@ pub fn exponential_moving_average<
 
     let mut ema: Vec<T> = vec![first_ema];
 
-    for index in (period as usize + 1)..max_length {
+    for price in prices.iter().take(max_length).skip(period as usize + 1) {
         let prev_ema = ema.last().expect("No previous EMA");
         if let Some(value) =
-            calculate_exponential_moving_average(prices[index], smoothing_factor, *prev_ema)
+            calculate_exponential_moving_average(*price, smoothing_factor, *prev_ema)
         {
             ema.push(value);
         } else {
