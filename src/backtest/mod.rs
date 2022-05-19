@@ -14,15 +14,44 @@ pub struct IBackTestingParams<'a> {
     pub period: u32,
 }
 
+#[derive(Debug)]
 pub struct IBackTestingIndicator<T> {
-    pub cdc: Vec<T>,
-    pub ma_cross: Vec<T>,
+    pub cdc: T,
+    pub ma_cross: T,
+}
+impl IBackTestingIndicator<Decimal> {
+    pub fn get_positions(
+        indicator: Vec<Decimal>,
+        prices: &[Decimal],
+        gap: usize,
+    ) -> IBackTestingResult<Decimal> {
+        let mut positions: IBackTestingResult<Decimal> = IBackTestingResult { result: Vec::new() };
+        for index in 1..indicator.len() {
+            if indicator[index] > Decimal::ZERO && indicator[index - 1] < Decimal::ZERO {
+                positions.result.push(IBackTestingSingleResult {
+                    action: POSITION::Long,
+                    price: prices[index + gap],
+                })
+            } else if indicator[index] < Decimal::ZERO
+                && indicator[index - 1] > Decimal::ZERO
+                && !positions.result.is_empty()
+            {
+                if let POSITION::Long = positions.result[positions.result.len() - 1].action {
+                    positions.result.push(IBackTestingSingleResult {
+                        action: POSITION::Close,
+                        price: prices[index + gap],
+                    })
+                }
+            }
+        }
+        positions
+    }
 }
 
-pub struct IPreBacktesting<T> {
+pub struct IPreBacktesting<T, K> {
     pub prices: Box<[T]>,
     pub returns: Vec<T>,
-    pub indicators: IBackTestingIndicator<T>,
+    pub indicators: IBackTestingIndicator<K>,
 }
 
 #[derive(Debug)]
@@ -34,13 +63,6 @@ pub struct IBackTestingSingleResult<T> {
 #[derive(Debug)]
 pub struct IBackTestingResult<T> {
     pub result: Vec<IBackTestingSingleResult<T>>,
-}
-
-#[derive(Debug)]
-pub struct IBacktestingReturn<T> {
-    pub entry: T,
-    pub closing: T,
-    pub returns: T,
 }
 
 impl<T: Sized + core::fmt::Debug + Copy + Sub<Output = T> + Div<Output = T>> IBackTestingResult<T> {
@@ -71,9 +93,16 @@ impl<T: Sized + core::fmt::Debug + Copy + Sub<Output = T> + Div<Output = T>> IBa
 }
 
 #[derive(Debug)]
+pub struct IBacktestingReturn<T> {
+    pub entry: T,
+    pub closing: T,
+    pub returns: T,
+}
+
+#[derive(Debug)]
 pub enum POSITION {
-    LONG,
-    CLOSE,
+    Long,
+    Close,
 }
 
 // TODO: SMA, EMA Cross ??
@@ -83,11 +112,11 @@ pub enum POSITION {
 
 async fn pre_backtest(
     IBackTestingParams { coin_id, .. }: IBackTestingParams<'_>,
-) -> Result<IPreBacktesting<Decimal>, String> {
+) -> Result<IPreBacktesting<Decimal, Vec<Decimal>>, String> {
     let prices: Box<[Decimal]> = get_historical_chart_data(coin_id).await.extract_prices();
     let returns: Vec<Decimal> = get_return(&prices).await;
 
-    let indicators: IBackTestingIndicator<Decimal> = IBackTestingIndicator {
+    let indicators: IBackTestingIndicator<Vec<Decimal>> = IBackTestingIndicator {
         // sma: simple_moving_average(IMAParams { prices: &prices, period: 12 }).unwrap(),
         // ema: exponential_moving_average(IMAParams { prices: &prices, period: 12 }).unwrap(),
         cdc: get_cdc_action_zone(&prices).await.unwrap(),
@@ -101,7 +130,9 @@ async fn pre_backtest(
     })
 }
 
-pub async fn start_backtesting(params: IBackTestingParams<'_>) -> IBackTestingResult<Decimal> {
+pub async fn start_backtesting(
+    params: IBackTestingParams<'_>,
+) -> IBackTestingIndicator<IBackTestingResult<Decimal>> {
     let IBackTestingParams { coin_id, period } = params;
     let IPreBacktesting {
         prices,
@@ -113,30 +144,12 @@ pub async fn start_backtesting(params: IBackTestingParams<'_>) -> IBackTestingRe
         panic!("Fail to run pre backtest")
     };
 
-    let mut positions: IBackTestingResult<Decimal> = IBackTestingResult { result: Vec::new() };
-    let gap = prices.len() - indicators.cdc.len();
-    // * Extract
-    for index in 1..indicators.cdc.len() {
-        if indicators.cdc[index] > Decimal::ZERO && indicators.cdc[index - 1] < Decimal::ZERO {
-            positions.result.push(IBackTestingSingleResult {
-                action: POSITION::LONG,
-                price: prices[index + gap],
-            })
-        } else if indicators.cdc[index] < Decimal::ZERO
-            && indicators.cdc[index - 1] > Decimal::ZERO
-            && positions.result.len() != 0
-        {
-            match positions.result[positions.result.len() - 1].action {
-                POSITION::LONG => positions.result.push(IBackTestingSingleResult {
-                    action: POSITION::CLOSE,
-                    price: prices[index + gap],
-                }),
-                _ => (),
-            }
-        }
-    }
-    //TODO: Fix prices, ma length not match
-    println!("{:#?}, {:#?}", indicators.cdc.len(), prices.len());
-    println!("{:#?}", positions);
-    positions
+    let IBackTestingIndicator { cdc, ma_cross } = indicators;
+
+    let gap = prices.len() - cdc.len();
+
+    let cdc = IBackTestingIndicator::get_positions(cdc, &prices, gap);
+    let ma_cross = IBackTestingIndicator::get_positions(ma_cross, &prices, gap);
+
+    IBackTestingIndicator { cdc, ma_cross }
 }
