@@ -1,14 +1,15 @@
 use std::ops::{Div, Sub};
-use std::process::Output;
 
-use crate::get_price::historical_price::{get_historical_chart_data, IHistoricalResponse};
+use crate::get_price::historical_price::get_historical_chart_data;
 use crate::price_manipulation::returns::{get_average_return, get_return};
-use crate::ta_rs::cdc_action_zone;
-use crate::ta_rs::ma::get_ma_cross;
-use rust_decimal::prelude::Decimal;
-// use crate::ta_rs::ma::{simple_moving_average, exponential_moving_average, IMAParams};
-use crate::ta_rs::cdc_action_zone::get_cdc_action_zone;
 
+use crate::ta_rs::cdc_action_zone::get_cdc_action_zone;
+use crate::ta_rs::ma::get_ma_cross;
+
+use rust_decimal::prelude::Decimal;
+
+pub mod summary;
+use summary::IBackTestingSummary;
 pub struct IBackTestingParams<'a> {
     pub coin_id: &'a str,
     pub period: u32,
@@ -72,26 +73,60 @@ impl<T: Sized + core::fmt::Debug + Copy + Sub<Output = T> + Div<Output = T>> IBa
             .map(|IBackTestingSingleResult { action: _, price }| *price)
             .collect::<Box<[T]>>()
     }
-    pub fn get_return(&self) -> Vec<IBacktestingReturn<T>> {
-        let price = self.get_price();
+    pub fn get_entry_and_close(&self) -> Vec<IBacktestingReturn<T>> {
         let mut store: Vec<IBacktestingReturn<T>> = Vec::new();
-        let mut long_position: T = price[0];
-        for index in 0..price.len() {
-            if index % 2 == 0 {
-                long_position = price[index]
+        let mut long_position: T = self.result[0].price;
+        for result in &self.result {
+            if result.action == POSITION::Long {
+                long_position = result.price
             } else {
                 store.push(IBacktestingReturn {
                     entry: long_position,
-                    closing: price[index],
-                    returns: (price[index] - long_position) / long_position,
+                    closing: result.price,
+                    returns: (result.price - long_position) / long_position,
                 })
             }
         }
 
         store
     }
+    pub fn get_return(&self) -> Vec<T> {
+        let entry_and_close = self.get_entry_and_close();
+        entry_and_close
+            .iter()
+            .map(
+                |IBacktestingReturn {
+                     entry: _,
+                     closing: _,
+                     returns,
+                 }| *returns,
+            )
+            .collect::<Vec<T>>()
+    }
 }
 
+impl IBackTestingResult<Decimal> {
+    async fn get_average_return(&self) -> Decimal {
+        get_average_return(self.get_return()).await
+    }
+    pub fn filter_positive_return(&self) -> Vec<Decimal> {
+        self.get_return()
+            .iter()
+            .filter(|value| **value > Decimal::ZERO)
+            .copied()
+            .collect::<Vec<Decimal>>()
+    }
+    pub fn filter_negative_return(&self) -> Vec<Decimal> {
+        self.get_return()
+            .iter()
+            .filter(|value| **value < Decimal::ZERO)
+            .copied()
+            .collect::<Vec<Decimal>>()
+    }
+    pub async fn get_summary(&self) -> IBackTestingSummary {
+        IBackTestingSummary::calculate(self)
+    }
+}
 #[derive(Debug)]
 pub struct IBacktestingReturn<T> {
     pub entry: T,
@@ -99,13 +134,12 @@ pub struct IBacktestingReturn<T> {
     pub returns: T,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum POSITION {
     Long,
     Close,
 }
 
-// TODO: SMA, EMA Cross ??
 // TODO: Dynamic trading strategies testing
 
 // TODO: Average return of backtest should be limited risk
