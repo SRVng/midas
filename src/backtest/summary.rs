@@ -115,25 +115,39 @@ impl IBackTestingSummary {
         Decimal::from_u16(self.winning_trade).expect("Failed to parse Decimal from u16")
             / Decimal::from_u16(self.total_trade).expect("Failed to parse Decimal from u16")
     }
-    // TODO: Should return MAX()
     pub fn get_max_consective_win(returns: &[Decimal]) -> u16 {
         let mut consecutive_win: u16 = 0;
+        let mut record: Vec<u16> = Vec::new();
         for index in 1..returns.len() {
             if returns[index] > Decimal::ZERO && returns[index - 1] > Decimal::ZERO {
-                consecutive_win += 1
+                consecutive_win += 1;
+            } else {
+                record.push(consecutive_win);
+                consecutive_win = 0;
             }
         }
-        consecutive_win
+        *record
+            .iter()
+            .max()
+            .expect("Failed to parse max consecutive win")
+            .max(&consecutive_win)
     }
-    // TODO: Should return MAX()
     pub fn get_max_consecutive_loss(returns: &[Decimal]) -> u16 {
         let mut consecutive_loss: u16 = 0;
+        let mut record: Vec<u16> = Vec::new();
         for index in 1..returns.len() {
             if returns[index] < Decimal::ZERO && returns[index - 1] < Decimal::ZERO {
-                consecutive_loss += 1
+                consecutive_loss += 1;
+            } else {
+                record.push(consecutive_loss);
+                consecutive_loss = 0;
             }
         }
-        consecutive_loss
+        *record
+            .iter()
+            .max()
+            .expect("Failed to parse max consecutive loss")
+            .max(&consecutive_loss)
     }
     pub fn get_pv_gp_gl(returns: &[Decimal]) -> [Decimal; 3] {
         // 1 = Initial fund
