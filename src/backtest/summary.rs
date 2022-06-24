@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
-use rust_decimal::{
-    prelude::{FromPrimitive, ToPrimitive},
-    Decimal,
-};
+use rust_decimal::Decimal;
+
+use num::{FromPrimitive, ToPrimitive};
+
 use rust_decimal_macros::dec;
 
 use crate::utils::mean;

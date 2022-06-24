@@ -1,8 +1,7 @@
 use crate::utils::{create_indicator_cross_vec, mean};
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use num::{FromPrimitive, ToPrimitive};
 use std::ops::{Add, Div, Mul, Sub};
 use std::{fmt::Debug, iter::Sum};
-
 pub struct IMAParams<'a, T: 'a + FromPrimitive + Sum<&'a T> + Div<Output = T> + Copy + Debug> {
     pub prices: &'a [T],
     pub period: u32,

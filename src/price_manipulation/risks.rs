@@ -1,8 +1,7 @@
 use crate::price_manipulation::returns::get_average_return;
-use rust_decimal::{
-    prelude::{Decimal, FromPrimitive},
-    MathematicalOps,
-};
+use rust_decimal::{prelude::Decimal, MathematicalOps};
+
+use num::FromPrimitive;
 
 pub async fn get_variance(returns: Vec<Decimal>) -> Decimal {
     let avg_return = get_average_return(returns.clone()).await;

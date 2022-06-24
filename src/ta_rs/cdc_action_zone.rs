@@ -4,7 +4,7 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use rust_decimal::prelude::FromPrimitive;
+use num::FromPrimitive;
 
 use crate::{
     ta_rs::ma::{exponential_moving_average, IMAParams},

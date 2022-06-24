@@ -1,5 +1,5 @@
 [package]
-name = "midas"
+name = "midas-core-app"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
+num = "0.4.0"
 reqwest = { version = "0.11.10", features = ["json"] }
 rust_decimal = { version = "1.23.1", features = ["maths"] }
 rust_decimal_macros = "1.23.1"

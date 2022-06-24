@@ -5,7 +5,7 @@ use std::iter::Sum;
 use std::ops::{Add, Div, Sub};
 pub mod mock;
 
-use rust_decimal::prelude::FromPrimitive;
+use num::FromPrimitive;
 
 pub fn remove_same_values_in_slice<T: Clone + Eq + Hash>(v1: &[T], v2: &[T]) -> Box<[T]> {
     let hs1: HashSet<T> = v1.iter().cloned().collect();
@@ -62,7 +62,8 @@ pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output = T> + FromPrimitive 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_decimal::prelude::{Decimal, FromPrimitive};
+    use num::FromPrimitive;
+    use rust_decimal::prelude::Decimal;
     use rust_decimal_macros::dec;
 
     #[test]

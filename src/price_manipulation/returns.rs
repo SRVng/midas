@@ -1,6 +1,7 @@
 use crate::utils::calculate_return;
 use crate::utils::mean;
-use rust_decimal::prelude::{Decimal, FromPrimitive};
+use num::FromPrimitive;
+use rust_decimal::prelude::Decimal;
 
 pub async fn get_return(prices: &[Decimal]) -> Vec<Decimal> {
     let prices_one_lag = prices[1..].to_vec();
