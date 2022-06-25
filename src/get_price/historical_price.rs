@@ -4,47 +4,72 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IHistoricalResponse {
-    prices: Box<[[Decimal; 2]]>,
-    market_caps: Box<[[Decimal; 2]]>,
-    total_volumes: Box<[[Decimal; 2]]>,
+    prices: Box<[[Option<Decimal>; 2]]>,
+    market_caps: Box<[[Option<Decimal>; 2]]>,
+    total_volumes: Box<[[Option<Decimal>; 2]]>,
 }
 
 impl IHistoricalResponse {
     pub fn extract_prices(&self) -> Box<[Decimal]> {
         self.prices
             .iter()
-            .map(|[_timestamp, price]| *price)
+            .enumerate()
+            .map(|(index, [_timestamp, price])| {
+                price.unwrap_or(if let [_, Some(x)] = self.prices[index - 1] {
+                    x
+                } else {
+                    // Worst case, replace null with zero is acceptable if there is no alternative
+                    Decimal::ZERO
+                })
+            })
             .collect::<Box<[Decimal]>>()
     }
     pub fn extract_market_caps(&self) -> Box<[Decimal]> {
         self.market_caps
             .iter()
-            .map(|[_timestamp, market_caps]| *market_caps)
+            .enumerate()
+            .map(|(index, [_timestamp, market_caps])| {
+                market_caps.unwrap_or(if let [_, Some(x)] = self.market_caps[index - 1] {
+                    x
+                } else {
+                    Decimal::ZERO
+                })
+            })
             .collect::<Box<[Decimal]>>()
     }
     pub fn extract_volumes(&self) -> Box<[Decimal]> {
         self.total_volumes
             .iter()
-            .map(|[_timestamp, volume]| *volume)
+            .enumerate()
+            .map(|(index, [_timestamp, volume])| {
+                volume.unwrap_or(if let [_, Some(x)] = self.total_volumes[index - 1] {
+                    x
+                } else {
+                    Decimal::ZERO
+                })
+            })
             .collect::<Box<[Decimal]>>()
     }
 }
 
 pub async fn get_historical_chart_data(coin_id: &str) -> IHistoricalResponse {
-    let endpoint: String = format!("https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=360&interval=daily");
+    let url: &str = "https://api.coingecko.com/api/v3/coins";
+    let usd_query: &str = "market_chart?vs_currency=usd";
+    let day: &str = "9999";
+    let endpoint: String = format!("{url}/{coin_id}/{usd_query}&days={day}&interval=daily");
 
     let client = reqwest::Client::new();
 
-    let response = client
+    let raw_response = client
         .get(endpoint)
         .send()
         .await
-        .expect("Error at response")
-        .json::<IHistoricalResponse>()
-        .await
-        .expect("Error on parsing json");
+        .expect("Error at response");
 
-    response
+    match raw_response.json::<IHistoricalResponse>().await {
+        Ok(x) => x,
+        Err(e) => panic!("Error message here: {}", e),
+    }
 }
 
 #[cfg(test)]
