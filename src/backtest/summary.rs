@@ -1,16 +1,17 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::SubAssign};
 
 use rust_decimal::Decimal;
 
 use num::{FromPrimitive, ToPrimitive};
 
 use rust_decimal_macros::dec;
+use serde::{Deserialize, Serialize};
 
 use crate::utils::mean;
 
 use super::IBackTestingResult;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IBackTestingSummary {
     pub total_trade: u16,
     pub winning_trade: u16,
@@ -102,6 +103,7 @@ impl IBackTestingSummary {
 
         // TODO: Maximum Drawdown
         // todo!("Maximum Drawdown, From its peak to next lowest portfolio value");
+        summary.maximum_drawdown = IBackTestingSummary::get_maximum_drawdown(&returns);
 
         summary
     }
@@ -135,6 +137,7 @@ impl IBackTestingSummary {
     pub fn get_max_consecutive_loss(returns: &[Decimal]) -> u16 {
         let mut consecutive_loss: u16 = 0;
         let mut record: Vec<u16> = Vec::new();
+
         for index in 1..returns.len() {
             if returns[index] < Decimal::ZERO && returns[index - 1] < Decimal::ZERO {
                 consecutive_loss += 1;
@@ -169,5 +172,50 @@ impl IBackTestingSummary {
             .for_each(drop);
 
         [portfolio_value, gross_profit, gross_loss]
+    }
+    /// Calculate [maximum drawdown](https://www.investopedia.com/terms/m/maximum-drawdown-mdd.asp) from returns
+    /// Find n-1 peak and n peak then calculate drawdown between n-1 and n
+    /// @returns Return the smallest value of drawdown
+    pub fn get_maximum_drawdown(returns: &[Decimal]) -> Decimal {
+        // Calculate Equity Value -> From timestamp 0 to timestamp 1 in the trade
+        // MAX([..Equity, Initial])
+        // Calculate drawdown by trough = current, peak = max equity
+        // Find largest (smallest)
+        let mut portfolio_value: Decimal = Decimal::ONE;
+        let mut equity_value: Vec<Decimal> = Vec::new();
+        returns
+            .iter()
+            .map(|value: &Decimal| {
+                portfolio_value = portfolio_value * (Decimal::ONE + value);
+                equity_value.push(portfolio_value);
+            })
+            .for_each(drop);
+
+        let highest_equity: &Decimal = equity_value
+            .iter()
+            .max()
+            .expect("Cannot find max equity value");
+        let mut drawdown: Vec<Decimal> = Vec::new();
+        equity_value
+            .iter()
+            .map(|x: &Decimal| {
+                drawdown.push(
+                    (x - highest_equity)
+                        .checked_div(*highest_equity)
+                        .expect("Cannot find drawdown"),
+                )
+            })
+            .for_each(drop);
+        println!("{:#?}", equity_value);
+        println!("{:#?}", drawdown.iter().min());
+        println!("{:#?}", drawdown.iter().max());
+
+        Decimal::ZERO
+    }
+}
+
+impl Default for IBackTestingSummary {
+    fn default() -> Self {
+        Self::new()
     }
 }

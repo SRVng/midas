@@ -9,7 +9,8 @@ use crate::ta_rs::ma::get_ma_cross;
 use rust_decimal::prelude::Decimal;
 
 pub mod summary;
-use summary::IBackTestingSummary;
+use serde::{Deserialize, Serialize};
+pub use summary::IBackTestingSummary;
 pub struct IBackTestingParams<'a> {
     pub coin_id: &'a str,
     pub period: u32,
@@ -55,13 +56,13 @@ pub struct IPreBacktesting<T, K> {
     pub indicators: IBackTestingIndicator<K>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IBackTestingSingleResult<T> {
     pub action: POSITION,
     pub price: T,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IBackTestingResult<T> {
     pub result: Vec<IBackTestingSingleResult<T>>,
 }
@@ -127,14 +128,14 @@ impl IBackTestingResult<Decimal> {
         IBackTestingSummary::calculate(self)
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IBacktestingReturn<T> {
     pub entry: T,
     pub closing: T,
     pub returns: T,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum POSITION {
     Long,
     Close,
