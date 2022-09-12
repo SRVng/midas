@@ -59,6 +59,18 @@ pub fn median<T: Ord + Copy + Add<Output = T> + Div<Output = T> + FromPrimitive 
     }
 }
 
+pub fn calculate_maximum_drawdown<T: Ord + Copy + Sub<Output = T> + Div<Output = T>>(values: Vec<T>) -> T {
+    let mut drawdown: Vec<T> = Vec::new();
+
+    for index in 0..values.len() {
+        if index != 0 {
+            drawdown.push((values[index] - values[index - 1]) / values[index - 1]);
+        }
+    }
+
+    *drawdown.iter().min().expect("Failed to calculate maximum drawdown")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,5 +98,3 @@ mod tests {
     }
 }
 
-// TODO: Clone vs Cloned ?
-// TODO: wtf is HashSet ?

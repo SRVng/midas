@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops::SubAssign};
+use std::{cmp::Ordering, ops::SubAssign, vec};
 
 use rust_decimal::Decimal;
 
@@ -7,7 +7,7 @@ use num::{FromPrimitive, ToPrimitive};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::mean;
+use crate::utils::{mean, calculate_maximum_drawdown};
 
 use super::IBackTestingResult;
 
@@ -101,8 +101,6 @@ impl IBackTestingSummary {
         summary.profit_factor = gross_profit / gross_loss;
         summary.returns = portfolio_value - Decimal::ONE;
 
-        // TODO: Maximum Drawdown
-        // todo!("Maximum Drawdown, From its peak to next lowest portfolio value");
         summary.maximum_drawdown = IBackTestingSummary::get_maximum_drawdown(&returns);
 
         summary
@@ -177,40 +175,19 @@ impl IBackTestingSummary {
     /// Find n-1 peak and n peak then calculate drawdown between n-1 and n
     /// @returns Return the smallest value of drawdown
     pub fn get_maximum_drawdown(returns: &[Decimal]) -> Decimal {
-        // Calculate Equity Value -> From timestamp 0 to timestamp 1 in the trade
-        // MAX([..Equity, Initial])
-        // Calculate drawdown by trough = current, peak = max equity
-        // Find largest (smallest)
+        // Initial Value
         let mut portfolio_value: Decimal = Decimal::ONE;
-        let mut equity_value: Vec<Decimal> = Vec::new();
+        let mut equity_value: Vec<Decimal> = vec![portfolio_value];
         returns
             .iter()
             .map(|value: &Decimal| {
+                // Calculate new equity value
                 portfolio_value = portfolio_value * (Decimal::ONE + value);
                 equity_value.push(portfolio_value);
             })
             .for_each(drop);
 
-        let highest_equity: &Decimal = equity_value
-            .iter()
-            .max()
-            .expect("Cannot find max equity value");
-        let mut drawdown: Vec<Decimal> = Vec::new();
-        equity_value
-            .iter()
-            .map(|x: &Decimal| {
-                drawdown.push(
-                    (x - highest_equity)
-                        .checked_div(*highest_equity)
-                        .expect("Cannot find drawdown"),
-                )
-            })
-            .for_each(drop);
-        println!("{:#?}", equity_value);
-        println!("{:#?}", drawdown.iter().min());
-        println!("{:#?}", drawdown.iter().max());
-
-        Decimal::ZERO
+        calculate_maximum_drawdown(equity_value)
     }
 }
 
